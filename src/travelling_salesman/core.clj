@@ -96,12 +96,15 @@
   "perform the simulated annealing routine,
   e.g. optimizing the travel between cities"
   [cities init-temp cooling-speed max-iteration]
+  (spit "optimization-results.txt" "Here are the results")
   (loop [x 0
          temperature init-temp
          result cities]
-   (println (str "Iteration: " x ", temperature: " temperature ",result: " result ", cost: " (cost result)))
+   (spit "optimization-results.txt"
+         (str "Iteration: " x ", temperature: " temperature ",result: " result ", cost: " (cost result) "\n")
+         :append :true)
    (if (or (> x max-iteration) (< temperature 1))
-     result
+     [result (cost result)]
      (let [nouveau (randomized-cities cities)]
        (if (accept? nouveau result temperature)
           (recur (inc x)
@@ -117,9 +120,15 @@
   [& args]
   (println "Les villes connues sont: ")
   (println (map #(get % :name) villes))
-  (println "Indiquez les villes que vous souhaitez visiter")
+  (println "Indiquez les villes que vous souhaitez visiter dans cities.txt")
   (println "format de saisie [\"Départ\" \"Ville1\" \"Ville2\" ... \"VilleN\" \"Arrivée\"]")
   (println "exemple: [\"Lille\" \"Paris\" \"Lyon\" \"Marseille\" \"Toulouse\" \"Lille\"]")
-  (def cities (read-line))
-  (println cities)
-  (simulated-annealing (read-string cities) 1000 0.95 10000))
+  (println "then press any key")
+  (def junk (read-line))
+  (def cities (slurp "cities.txt"))
+  (println (str "Here are the cities you chose: " cities))
+  (def results (simulated-annealing (read-string cities) 1000 0.95 10000))
+  (println "The optimal trip is: ")
+  (println (first results))
+  (println "The total distance covered by the trip is: ")
+  (println (str (second results) "km")))
