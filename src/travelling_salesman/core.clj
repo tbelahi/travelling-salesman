@@ -47,15 +47,59 @@
                           (reduce * [(cos lat1) (sin lon1) (cos lat2) (sin lon2)])
                           (* (sin lat1) (sin lat2))])))))
 
-(defn randomized-cities
+;(defn randomized-cities
+;  "take a vector of cities and return this vector in a random order
+;  except for the first and last positions that are unchanged"
+;  [vecVilles]
+;  ; let's use the magical shuffle
+;  (loop [n (rand (int (/ (count vecVilles) 2)))
+;         result vecVilles]
+;    (if (< n 0)
+;      result
+;      (let [len (count result)
+;            pos1 (int (rand len ))
+;            pos2 (int (rand len ))]
+;        (if (and (>= pos1 1) (< pos1 (- len 2)) (>= pos2 1) (< pos2 (- len 2)))
+;          (recur (dec n)
+;                 (assoc result pos1 (result pos2) pos2 (result pos1)))
+;          (recur (dec n)
+;                 result))))))
+
+(defn permute-cities
   "take a vector of cities and return this vector in a random order
   except for the first and last positions that are unchanged"
   [vecVilles]
-  ; let's use the magical shuffle
-  (let [x (first vecVilles)
-        y (last vecVilles)
-        inner (butlast (rest vecVilles))]
-    (vec (cons x (conj (shuffle inner) y)))))
+  (let [len (count vecVilles)
+       pos1 (int (rand len ))
+       pos2 (int (rand len ))]
+   (if (and (>= pos1 1) (< pos1 (- len 1)) (>= pos2 1) (< pos2 (- len 1)))
+            (assoc vecVilles pos1 (vecVilles pos2) pos2 (vecVilles pos1))
+            (permute-cities vecVilles))))
+
+(defn permute-neighbour-cities
+  "take a vector of cities and return this vector in a random order
+  except for the first and last positions that are unchanged"
+  [vecVilles]
+  (let [len (count vecVilles)
+       pos1 (int (rand len ))
+       pos2 (int (rand len ))]
+   (if (< pos1 pos2)
+     (if (and (>= pos1 1) (< pos1 (- len 2)))
+         (assoc vecVilles pos1 (vecVilles (inc pos1)) (inc pos1) (vecVilles pos1))
+         (permute-neighbour-cities vecVilles))
+     (if (and (>= pos1 2) (< pos1 (- len 1)))
+         (assoc vecVilles pos1 (vecVilles (dec pos1)) (dec pos1) (vecVilles pos1))
+         (permute-neighbour-cities vecVilles)))))
+
+(defn perturb-cities
+  "takes the iteration as argument and a vector of cities.
+  defines the way to perturb the vector of cities depending 
+  on the iteration value. Odd iteration => permute neighbors
+  Even iteration => permute 2 random positions in the list"
+  [cities iteration]
+  (if (odd? iteration)
+    (permute-neighbour-cities cities)
+    (permute-cities cities)))
 
 (defn name->ville
   "takes a string reprenting the name of city and gets
@@ -96,6 +140,7 @@
   "perform the simulated annealing routine,
   e.g. optimizing the travel between cities"
   [cities init-temp cooling-speed max-iteration]
+  (println (str init-temp cooling-speed max-iteration))
   (spit "optimization-results.txt" "Here are the results")
   (loop [x 0
          temperature init-temp
@@ -105,13 +150,15 @@
          :append :true)
    (if (or (> x max-iteration) (< temperature 1))
      [result (cost result)]
-     (let [nouveau (randomized-cities cities)]
+     (let [nouveau (perturb-cities result x)]
        (if (accept? nouveau result temperature)
           (recur (inc x)
-                 (* cooling-speed temperature)
+                 (- temperature (* cooling-speed 1))
+                 ;(* cooling-speed temperature)
                  nouveau)
           (recur (inc x)
-                 (* cooling-speed temperature)
+                 (- temperature (* cooling-speed 1))
+                 ;(* cooling-speed temperature)
                  result))))))
 
 
@@ -127,7 +174,7 @@
   (def junk (read-line))
   (def cities (slurp "cities.txt"))
   (println (str "Here are the cities you chose: " cities))
-  (def results (simulated-annealing (read-string cities) 1000 0.95 10000))
+  (def results (simulated-annealing (read-string cities) 5500 0.3 25000))
   (println "The optimal trip is: ")
   (println (first results))
   (println "The total distance covered by the trip is: ")
