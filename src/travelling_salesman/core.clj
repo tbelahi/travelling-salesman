@@ -6,7 +6,7 @@
              {:name "Lyon" :lat 45.7564 :lon 4.8333}
              {:name "Marseille" :lat 43.2815 :lon 5.3751}
              {:name "Toulouse" :lat 43.6013 :lon 1.4375}
-             {:name "Clermont-ferrand" :lat 45.7824 :lon 3.0987}
+             {:name "Clermont-Ferrand" :lat 45.7824 :lon 3.0987}
              {:name "Montpellier" :lat 43.6067 :lon 3.8763}
              {:name "Bordeaux" :lat  44.8521 :lon -0.5852}
              {:name "Poitiers" :lat 44.8521 :lon -0.585}
@@ -141,12 +141,12 @@
   e.g. optimizing the travel between cities"
   [cities init-temp cooling-speed max-iteration]
   (println (str init-temp cooling-speed max-iteration))
-  (spit "optimization-results.txt" "Here are the results")
+  (spit "optimization-results.csv" "iteration;temperature;cost;result\n")
   (loop [x 0
          temperature init-temp
          result cities]
-   (spit "optimization-results.txt"
-         (str "Iteration: " x ", temperature: " temperature ",result: " result ", cost: " (cost result) "\n")
+   (spit "optimization-results.csv"
+         (str x ";" temperature ";" (cost result) ";" result "\n")
          :append :true)
    (if (or (> x max-iteration) (< temperature 1))
      [result (cost result)]
@@ -174,7 +174,7 @@
   (def junk (read-line))
   (def cities (slurp "cities.txt"))
   (println (str "Here are the cities you chose: " cities))
-  (def results (simulated-annealing (read-string cities) 5500 0.3 25000))
+  (def results (simulated-annealing (read-string cities) 5500 0.29 25000))
   (println "The optimal trip is: ")
   (println (first results))
   (println "The total distance covered by the trip is: ")
