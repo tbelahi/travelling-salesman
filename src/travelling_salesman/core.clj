@@ -47,24 +47,6 @@
                           (reduce * [(cos lat1) (sin lon1) (cos lat2) (sin lon2)])
                           (* (sin lat1) (sin lat2))])))))
 
-;(defn randomized-cities
-;  "take a vector of cities and return this vector in a random order
-;  except for the first and last positions that are unchanged"
-;  [vecVilles]
-;  ; let's use the magical shuffle
-;  (loop [n (rand (int (/ (count vecVilles) 2)))
-;         result vecVilles]
-;    (if (< n 0)
-;      result
-;      (let [len (count result)
-;            pos1 (int (rand len ))
-;            pos2 (int (rand len ))]
-;        (if (and (>= pos1 1) (< pos1 (- len 2)) (>= pos2 1) (< pos2 (- len 2)))
-;          (recur (dec n)
-;                 (assoc result pos1 (result pos2) pos2 (result pos1)))
-;          (recur (dec n)
-;                 result))))))
-
 (defn permute-cities
   "take a vector of cities and return this vector in a random order
   except for the first and last positions that are unchanged"
@@ -136,6 +118,14 @@
         true
         false)))
 
+
+(defn set-temperature
+  "provide temperature for a given iteration
+  knowing initial temperature and maximum iteration
+  number and speed of decrease T=exp(-it/(max-iter*(1-speed)))"
+  [iteration init-temp max-iter speed]
+  (* init-temp (exp (- 0.0 (/ iteration (* max-iter (- 1 speed)))))))
+
 (defn simulated-annealing
   "perform the simulated annealing routine,
   e.g. optimizing the travel between cities"
@@ -153,12 +143,10 @@
      (let [nouveau (perturb-cities result x)]
        (if (accept? nouveau result temperature)
           (recur (inc x)
-                 (- temperature (* cooling-speed 1))
-                 ;(* cooling-speed temperature)
+                 (set-temperature x init-temp max-iteration cooling-speed)
                  nouveau)
           (recur (inc x)
-                 (- temperature (* cooling-speed 1))
-                 ;(* cooling-speed temperature)
+                 (set-temperature x init-temp max-iteration cooling-speed)
                  result))))))
 
 
@@ -174,7 +162,7 @@
   (def junk (read-line))
   (def cities (slurp "cities.txt"))
   (println (str "Here are the cities you chose: " cities))
-  (def results (simulated-annealing (read-string cities) 5500 0.29 25000))
+  (def results (simulated-annealing (read-string cities) 5500 0.85 25000))
   (println "The optimal trip is: ")
   (println (first results))
   (println "The total distance covered by the trip is: ")
